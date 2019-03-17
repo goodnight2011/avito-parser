@@ -38,10 +38,37 @@ def parseAnnouncementLinks(url):
         break
     return urls
 
+def parseLiSpanElem(tree, label, isValue):
+    astr = str(html.tostring(tree.xpath('//li[span[contains(.,"' + label + '")]]')[0]), 'UTF-8')
+    astr = astr[astr.find('span>') + 5:astr.find('</li>')].strip()
+    if isValue:
+        return astr
+
+    ret = ''
+    for c in astr:
+        if c.isnumeric() or c == '.':
+            ret = ret + c
+        else: 
+            break
+    return ret
+
+
 def parseAnnouncement(url):
     tree = html.fromstring(requests.get(url, headers = headers).text)
-    kitchenSq = str(html.tostring(tree.xpath('//li[span[contains(.,"Площадь кухни")]]')[0]), 'UTF-8')
-    kitchenSq = kitchenSq[kitchenSq.find('span>') + 5:kitchenSq.find('/li>')]
-    print(kitchenSq)
+    kitchenSq = parseLiSpanElem(tree, "Площадь кухни", True)
+    liveSq = parseLiSpanElem(tree, "Жилая площадь", True)
+    floor = parseLiSpanElem(tree, "Этаж", True)
+    maxFloor = parseLiSpanElem(tree, "Этажей в доме", True)
+    houseType = parseLiSpanElem(tree, "Тип дома", False)
+    roomAmount = parseLiSpanElem(tree, "Количество комнат", True)
+    return {
+        'kitchenSq': kitchenSq,
+        'liveSq': liveSq,
+        'floor': floor,
+        'maxFloor': maxFloor,
+        'houseType': houseType,
+        'roomAmount' : roomAmount
+    }
     
-parseAnnouncement(sys.argv[1])
+print(parseAnnouncement(sys.argv[1]))
+# print(parseLiSpanElem("fuck", "you"))
